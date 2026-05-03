@@ -78,6 +78,9 @@ gender = st.sidebar.selectbox("Gender", ["Male", "Female"])
 contract = st.sidebar.selectbox("Contract", ["Month-to-month", "One year", "Two year"])
 internet = st.sidebar.selectbox("Internet Service", ["DSL", "Fiber optic", "No"])
 
+st.sidebar.markdown("---")
+st.sidebar.info("Built by Kuljeet Dhillon 🚀")
+
 # -------------------------------
 # INPUT DATA
 # -------------------------------
@@ -132,6 +135,15 @@ if st.button("🚀 Analyze Customer"):
         st.success(f"✅ Low Churn Risk ({probability:.2%})")
 
     st.progress(float(probability))
+    
+    st.markdown("### 📊 Key Insights")
+
+if probability > 0.7:
+    st.warning("Customer likely to churn due to high charges or low tenure")
+elif probability > 0.4:
+    st.info("Moderate risk — consider engagement offers")
+else:
+    st.success("Customer is stable")
 
     # -------------------------------
     # 🎯 GAUGE METER
