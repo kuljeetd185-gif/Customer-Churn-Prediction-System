@@ -126,66 +126,41 @@ if st.button("🚀 Analyze Customer"):
     prediction = model.predict(input_data)[0]
     probability = model.predict_proba(input_data)[0][1]
 
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # Result
+    # ---------------- RESULT ----------------
     if prediction == 1:
-        st.error(f"⚠️ High Churn Risk ({probability:.2%})")
+        st.markdown("⚠️ High Churn Risk")
     else:
-        st.success(f"✅ Low Churn Risk ({probability:.2%})")
+        st.markdown("✅ Low Churn Risk")
 
     st.progress(float(probability))
-    
+
+    # ---------------- INSIGHTS ----------------
     st.markdown("### 📊 Key Insights")
 
-if probability > 0.7:
-    st.warning("Customer likely to churn due to high charges or low tenure")
-elif probability > 0.4:
-    st.info("Moderate risk — consider engagement offers")
-else:
-    st.success("Customer is stable")
+    if probability > 0.7:
+        st.warning("Customer likely to churn due to high charges or low tenure")
+    elif probability > 0.4:
+        st.info("Moderate risk — consider engagement offers")
+    else:
+        st.success("Customer is stable")
 
-    # -------------------------------
-    # 🎯 GAUGE METER
-    # -------------------------------
-    st.markdown("### 🎯 Churn Risk Meter")
-
+    # ---------------- GAUGE ----------------
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=probability * 100,
         title={'text': "Churn Probability (%)"},
-        gauge={
-            'axis': {'range': [0, 100]},
-            'bar': {'color': "red"},
-            'steps': [
-                {'range': [0, 30], 'color': "green"},
-                {'range': [30, 70], 'color': "yellow"},
-                {'range': [70, 100], 'color': "red"},
-            ],
-        }
+        gauge={'axis': {'range': [0, 100]}}
     ))
-
     st.plotly_chart(fig)
 
-    # -------------------------------
-    # 📈 BAR CHART
-    # -------------------------------
-    st.markdown("### 📈 Prediction Confidence")
-
-    fig = go.Figure(data=[
+    # ---------------- BAR CHART ----------------
+    fig2 = go.Figure(data=[
         go.Bar(
             x=["Stay", "Churn"],
             y=[1 - probability, probability]
         )
     ])
-
-    fig.update_layout(
-        title="Prediction Distribution",
-        yaxis_title="Probability"
-    )
-
-    st.plotly_chart(fig)
-
+    st.plotly_chart(fig2)
 # -------------------------------
 # INSIGHTS (OUTSIDE BUTTON)
 # -------------------------------
