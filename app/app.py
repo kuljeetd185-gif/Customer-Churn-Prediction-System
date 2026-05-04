@@ -79,7 +79,7 @@ contract = st.sidebar.selectbox("Contract", ["Month-to-month", "One year", "Two 
 internet = st.sidebar.selectbox("Internet Service", ["DSL", "Fiber optic", "No"])
 
 st.sidebar.markdown("---")
-st.sidebar.info("Built by Kuljeet Dhillon 🚀")
+st.sidebar.info("Built by Kuljeet Singh Dhillon 🚀")
 
 # -------------------------------
 # INPUT DATA
