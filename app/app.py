@@ -5,7 +5,7 @@ import pandas as pd
 import os
 
 # -------------------------------
-# PAGE CONFIG (MUST BE FIRST)
+# PAGE CONFIG 
 # -------------------------------
 st.set_page_config(page_title="Churn Dashboard", layout="wide")
 
