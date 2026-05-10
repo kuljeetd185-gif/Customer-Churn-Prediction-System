@@ -4,6 +4,7 @@ import pickle
 import pandas as pd
 import os
 import streamlit.components.v1 as components
+import time 
 
 # -------------------------------
 # TEXT TO SPEECH FUNCTION
@@ -15,47 +16,104 @@ def speak_text(text):
 
     function speakNow() {{
 
-        var voices = window.speechSynthesis.getVoices();
+        let voices = window.speechSynthesis.getVoices();
 
-        var msg = new SpeechSynthesisUtterance();
+        let msg = new SpeechSynthesisUtterance();
 
         msg.text = `{text}`;
 
-        // PROFESSIONAL SETTINGS
-        msg.rate = 0.88;
+        // PROFESSIONAL VOICE SETTINGS
+        msg.rate = 1.02;
 
-        msg.pitch = 0.95;
+        msg.pitch = 0.92;
 
         msg.volume = 1;
 
-        // BEST AVAILABLE PROFESSIONAL VOICE
-        msg.voice = voices.find(voice =>
-            voice.name.includes("Google UK English Female")
-        ) || voices.find(voice =>
-            voice.name.includes("Microsoft")
-        ) || voices[0];
+        // PREMIUM VOICE PRIORITY
+        msg.voice =
+            voices.find(v => v.name.includes("Google UK English Female")) ||
+            voices.find(v => v.name.includes("Microsoft Aria")) ||
+            voices.find(v => v.name.includes("Samantha")) ||
+            voices.find(v => v.name.includes("Jenny")) ||
+            voices[0];
 
-        // Stop previous speech
+        // REMOVE PREVIOUS SPEECH
         window.speechSynthesis.cancel();
 
-        // Speak
+        // SPEAK
         window.speechSynthesis.speak(msg);
     }}
 
-    // Load voices properly
+    // LOAD VOICES PROPERLY
     speechSynthesis.onvoiceschanged = speakNow;
 
-    // Fallback
+    // FALLBACK
     speakNow();
 
     </script>
     """
 
+
     components.html(js_code, height=0)
+  
+
 # -------------------------------
 # PAGE CONFIG
 # -------------------------------
 st.set_page_config(page_title="Churn Dashboard", layout="wide")
+
+# ---------------------------------
+# SPLASH SCREEN ONLY ON FIRST LOAD
+# ---------------------------------
+
+import time
+
+if "splash_shown" not in st.session_state:
+
+    st.session_state.splash_shown = False
+
+if not st.session_state.splash_shown:
+
+    splash_placeholder = st.empty()
+
+    splash_placeholder.markdown(
+        """
+        <div style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 999999;
+        ">
+
+        <div style="
+                color: white;
+                font-size: 70px;
+                font-weight: 700;
+                letter-spacing: 5px;
+                font-family: 'Segoe UI', sans-serif;
+        ">
+                Rentenza AI
+        </div>
+
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.markdown(" ")
+
+    time.sleep(2.5)
+
+    splash_placeholder.empty()
+
+    st.session_state.splash_shown = True
+
 
 # -------------------------------
 # CUSTOM CSS
@@ -202,9 +260,11 @@ section[data-testid="stSidebar"] {
             0 0 20px rgba(0,198,255,0.2);
     }
 }
-</style>
+
+
 
 """, unsafe_allow_html=True)
+
 
 # -------------------------------
 # LOAD MODEL
@@ -279,93 +339,92 @@ with col3:
 # PREDICTION
 # -------------------------------
 
+probability = None
+prediction = None
+insight_message = ""
+
 if st.button("🚀 Analyze Customer"):
 
     prediction = model.predict(input_data)[0]
+
     probability = model.predict_proba(input_data)[0][1]
 
-    # ---------------- RESULT ----------------
-    if prediction == 1:
-        st.error("⚠️ High Churn Risk")
-    else:
-        st.success("✅ Low Churn Risk")
+   # ---------------- INSIGHTS ----------------
 
-    st.progress(float(probability))
-
-    # ---------------- INSIGHTS ----------------
     st.markdown("### 📊 AI Generated Customer Insights")
 
+if probability is not None:
+
     if probability > 0.7:
-        message = f"""
-        High churn risk detected.
 
-        The customer demonstrates strong indicators of potential churn behavior,
-        including reduced engagement and service patterns commonly linked with customer loss.
+        insight_message = """        
+        The customer shows a high churn probability due to high monthly charges,
+        shorter tenure duration, and lower long-term service commitment.
+        Month-to-month subscription behavior further increases churn risk.
 
-        Immediate retention strategies such as personalized offers, proactive support,
-        and loyalty programs are highly recommended.
+        Recommendation:
+        Offer personalized retention discounts, loyalty rewards, and long-term
+        subscription benefits. Proactive customer engagement and service support
+        should be prioritized to improve retention probability.
         """
 
-        st.error(message)
+        st.error(insight_message)
 
     elif probability > 0.4:
-        message = f"""
-        Moderate churn risk detected.
 
-        The customer shows early warning signs of possible dissatisfaction or reduced engagement.
-        Targeted retention campaigns and improved customer interaction may help
-        strengthen long-term loyalty.
+        insight_message = """
+        The customer demonstrates moderate churn tendencies influenced by pricing,
+        engagement patterns, and subscription behavior. Reduced interaction levels
+        may gradually increase churn probability over time.
+
+        Recommendation:
+        Strengthen customer engagement through personalized communication,
+        promotional offers, and satisfaction-focused service improvements.
+        Encouraging longer subscription plans may improve customer retention.
         """
 
-        st.warning(message)
+        st.warning(insight_message)
 
     else:
-        message = f"""
-        Low churn risk detected.
 
-        The customer appears stable with healthy engagement behavior and a strong likelihood
-        of long-term retention based on current service usage patterns.
+        insight_message = """
+        The customer currently shows stable retention behavior with healthy service
+        engagement and satisfactory subscription activity. Lower churn indicators
+        suggest strong customer stability.
+
+        Recommendation:
+        Maintain service quality and customer satisfaction standards while offering
+        loyalty benefits and long-term engagement opportunities to preserve customer retention.
         """
 
-        st.success(message)
+        st.success(insight_message)
 
-    # ---------------- AUTO SPEAK ----------------
-    speak_text(message)
+    # AUTO SPEAK
+    speak_text(insight_message) 
 
     # ---------------- SPEAK BUTTON ----------------
     if st.button("🔊 Speak Insight"):
-        speak_text(message)
+        speak_text(insight_message)
 
-    # ---------------- GAUGE CHART ----------------
-    fig = go.Figure(go.Indicator(
+    if probability is not None:
+    
+    # Gauge Chart
+     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=probability * 100,
         title={'text': "Churn Probability (%)"},
-        gauge={
-            'axis': {'range': [0, 100]},
-            'bar': {'color': "red"},
-            'steps': [
-                {'range': [0, 30], 'color': "green"},
-                {'range': [30, 70], 'color': "yellow"},
-                {'range': [70, 100], 'color': "red"}
-            ]
-        }
+        gauge={'axis': {'range': [0, 100]}}
     ))
 
     st.plotly_chart(fig)
 
-    # ---------------- BAR CHART ----------------
+    # Bar Chart
     fig2 = go.Figure(data=[
         go.Bar(
             x=["Stay", "Churn"],
             y=[1 - probability, probability]
         )
     ])
-
-    fig2.update_layout(
-        title="Prediction Distribution",
-        yaxis_title="Probability"
-    )
 
     st.plotly_chart(fig2)
     
