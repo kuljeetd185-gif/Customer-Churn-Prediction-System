@@ -12,22 +12,46 @@ def speak_text(text):
     
     js_code = f"""
     <script>
-    var msg = new SpeechSynthesisUtterance();
 
-    msg.text = `{text}`;
+    function speakNow() {{
 
-    msg.rate = 1;
-    msg.pitch = 1;
+        var voices = window.speechSynthesis.getVoices();
 
-    msg.voice = speechSynthesis.getVoices()[1];
+        var msg = new SpeechSynthesisUtterance();
 
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(msg);
+        msg.text = `{text}`;
+
+        // PROFESSIONAL SETTINGS
+        msg.rate = 0.88;
+
+        msg.pitch = 0.95;
+
+        msg.volume = 1;
+
+        // BEST AVAILABLE PROFESSIONAL VOICE
+        msg.voice = voices.find(voice =>
+            voice.name.includes("Google UK English Female")
+        ) || voices.find(voice =>
+            voice.name.includes("Microsoft")
+        ) || voices[0];
+
+        // Stop previous speech
+        window.speechSynthesis.cancel();
+
+        // Speak
+        window.speechSynthesis.speak(msg);
+    }}
+
+    // Load voices properly
+    speechSynthesis.onvoiceschanged = speakNow;
+
+    // Fallback
+    speakNow();
+
     </script>
     """
 
     components.html(js_code, height=0)
-
 # -------------------------------
 # PAGE CONFIG
 # -------------------------------
