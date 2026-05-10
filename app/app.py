@@ -3,32 +3,30 @@ import plotly.graph_objects as go
 import pickle
 import pandas as pd
 import os
-import pyttsx3
+import streamlit.components.v1 as components
 
 # -------------------------------
 # TEXT TO SPEECH FUNCTION
 # -------------------------------
-def speak(text):
+def speak_text(text):
     
-    engine = pyttsx3.init()
+    js_code = f"""
+    <script>
+    var msg = new SpeechSynthesisUtterance();
 
-    # Speaking Speed
-    engine.setProperty('rate', 155)
+    msg.text = `{text}`;
 
-    # Voice Volume
-    engine.setProperty('volume', 1.0)
+    msg.rate = 1;
+    msg.pitch = 1;
 
-    # Available Voices
-    voices = engine.getProperty('voices')
+    msg.voice = speechSynthesis.getVoices()[1];
 
-    # Select Best Professional Voice
-    # Try changing index if needed
-    engine.setProperty('voice', voices[1].id)
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(msg);
+    </script>
+    """
 
-    # Smooth Speech
-    engine.say(text)
-
-    engine.runAndWait()
+    components.html(js_code, height=0)
 
 # -------------------------------
 # PAGE CONFIG
@@ -308,11 +306,11 @@ if st.button("🚀 Analyze Customer"):
         st.success(message)
 
     # ---------------- AUTO SPEAK ----------------
-    speak(message)
+    speak_text(message)
 
     # ---------------- SPEAK BUTTON ----------------
     if st.button("🔊 Speak Insight"):
-        speak(message)
+        speak_text(message)
 
     # ---------------- GAUGE CHART ----------------
     fig = go.Figure(go.Indicator(
@@ -478,7 +476,7 @@ if st.session_state["show_evaluation"]:
 
     if st.button("🔊 Speak Evaluation Summary"):
 
-        speak(evaluation_message)
+        speak_text(evaluation_message)
 
 # -------------------------------
 # STATIC INSIGHTS
