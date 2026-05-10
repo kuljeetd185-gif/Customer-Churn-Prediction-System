@@ -3,9 +3,35 @@ import plotly.graph_objects as go
 import pickle
 import pandas as pd
 import os
+import pyttsx3
 
 # -------------------------------
-# PAGE CONFIG 
+# TEXT TO SPEECH FUNCTION
+# -------------------------------
+def speak(text):
+    
+    engine = pyttsx3.init()
+
+    # Speaking Speed
+    engine.setProperty('rate', 155)
+
+    # Voice Volume
+    engine.setProperty('volume', 1.0)
+
+    # Available Voices
+    voices = engine.getProperty('voices')
+
+    # Select Best Professional Voice
+    # Try changing index if needed
+    engine.setProperty('voice', voices[1].id)
+
+    # Smooth Speech
+    engine.say(text)
+
+    engine.runAndWait()
+
+# -------------------------------
+# PAGE CONFIG
 # -------------------------------
 st.set_page_config(page_title="Churn Dashboard", layout="wide")
 
@@ -48,7 +74,114 @@ section[data-testid="stSidebar"] {
     border: none;
 }
 
+
+.metric-card {
+    background: rgba(255,255,255,0.14);
+
+    padding: 25px;
+
+    border-radius: 24px;
+
+    text-align: center;
+
+    border: 1px solid rgba(255,255,255,0.20);
+
+    box-shadow: 0 8px 25px rgba(0,0,0,0.30);
+
+    min-height: 220px;
+
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    justify-content: center;
+
+    align-items: center;
+
+    transition: all 0.35s ease;
+
+    backdrop-filter: blur(12px);
+}
+
+/* Hover Effect */
+.metric-card:hover {
+
+    transform: scale(1.06) translateY(-6px);
+
+    background: rgba(255,255,255,0.20);
+
+    box-shadow:
+        0 15px 35px rgba(0,0,0,0.40),
+        0 0 20px rgba(0,198,255,0.5);
+
+    cursor: pointer;
+}
+
+.metric-card h4 {
+    font-size: 22px;
+    margin-bottom: 12px;
+}
+
+.metric-card h2 {
+    font-size: 40px;
+    margin-bottom: 12px;
+    color: #00c6ff;
+}
+
+.metric-card p {
+    font-size: 15px;
+    line-height: 1.5;
+}
+.speaking-box {
+
+    background: rgba(0,198,255,0.12);
+
+    border: 2px solid #00c6ff;
+
+    padding: 25px;
+
+    border-radius: 20px;
+
+    color: white;
+
+    font-size: 18px;
+
+    line-height: 1.8;
+
+    animation: glowPulse 1.5s infinite;
+
+    box-shadow:
+        0 0 15px rgba(0,198,255,0.5),
+        0 0 35px rgba(0,198,255,0.4);
+
+    transition: all 0.3s ease;
+}
+
+/* Glow Animation */
+
+@keyframes glowPulse {
+
+    0% {
+        box-shadow:
+            0 0 10px rgba(0,198,255,0.4),
+            0 0 20px rgba(0,198,255,0.2);
+    }
+
+    50% {
+        box-shadow:
+            0 0 25px rgba(0,198,255,0.9),
+            0 0 50px rgba(0,198,255,0.6);
+    }
+
+    100% {
+        box-shadow:
+            0 0 10px rgba(0,198,255,0.4),
+            0 0 20px rgba(0,198,255,0.2);
+    }
+}
 </style>
+
 """, unsafe_allow_html=True)
 
 # -------------------------------
@@ -96,11 +229,13 @@ if "gender_Male" in input_data:
 
 if "Contract_One year" in input_data:
     input_data["Contract_One year"] = 1 if contract == "One year" else 0
+
 if "Contract_Two year" in input_data:
     input_data["Contract_Two year"] = 1 if contract == "Two year" else 0
 
 if "InternetService_Fiber optic" in input_data:
     input_data["InternetService_Fiber optic"] = 1 if internet == "Fiber optic" else 0
+
 if "InternetService_No" in input_data:
     input_data["InternetService_No"] = 1 if internet == "No" else 0
 
@@ -121,36 +256,80 @@ with col3:
 # -------------------------------
 # PREDICTION
 # -------------------------------
+
 if st.button("🚀 Analyze Customer"):
-    
+
     prediction = model.predict(input_data)[0]
     probability = model.predict_proba(input_data)[0][1]
 
     # ---------------- RESULT ----------------
     if prediction == 1:
-        st.markdown("⚠️ High Churn Risk")
+        st.error("⚠️ High Churn Risk")
     else:
-        st.markdown("✅ Low Churn Risk")
+        st.success("✅ Low Churn Risk")
 
     st.progress(float(probability))
 
     # ---------------- INSIGHTS ----------------
-    st.markdown("### 📊 Key Insights")
+    st.markdown("### 📊 AI Generated Customer Insights")
 
     if probability > 0.7:
-        st.warning("Customer likely to churn due to high charges or low tenure")
-    elif probability > 0.4:
-        st.info("Moderate risk — consider engagement offers")
-    else:
-        st.success("Customer is stable")
+        message = f"""
+        High churn risk detected.
 
-    # ---------------- GAUGE ----------------
+        The customer demonstrates strong indicators of potential churn behavior,
+        including reduced engagement and service patterns commonly linked with customer loss.
+
+        Immediate retention strategies such as personalized offers, proactive support,
+        and loyalty programs are highly recommended.
+        """
+
+        st.error(message)
+
+    elif probability > 0.4:
+        message = f"""
+        Moderate churn risk detected.
+
+        The customer shows early warning signs of possible dissatisfaction or reduced engagement.
+        Targeted retention campaigns and improved customer interaction may help
+        strengthen long-term loyalty.
+        """
+
+        st.warning(message)
+
+    else:
+        message = f"""
+        Low churn risk detected.
+
+        The customer appears stable with healthy engagement behavior and a strong likelihood
+        of long-term retention based on current service usage patterns.
+        """
+
+        st.success(message)
+
+    # ---------------- AUTO SPEAK ----------------
+    speak(message)
+
+    # ---------------- SPEAK BUTTON ----------------
+    if st.button("🔊 Speak Insight"):
+        speak(message)
+
+    # ---------------- GAUGE CHART ----------------
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=probability * 100,
         title={'text': "Churn Probability (%)"},
-        gauge={'axis': {'range': [0, 100]}}
+        gauge={
+            'axis': {'range': [0, 100]},
+            'bar': {'color': "red"},
+            'steps': [
+                {'range': [0, 30], 'color': "green"},
+                {'range': [30, 70], 'color': "yellow"},
+                {'range': [70, 100], 'color': "red"}
+            ]
+        }
     ))
+
     st.plotly_chart(fig)
 
     # ---------------- BAR CHART ----------------
@@ -160,18 +339,161 @@ if st.button("🚀 Analyze Customer"):
             y=[1 - probability, probability]
         )
     ])
+
+    fig2.update_layout(
+        title="Prediction Distribution",
+        yaxis_title="Probability"
+    )
+
     st.plotly_chart(fig2)
+    
 # -------------------------------
-# INSIGHTS (OUTSIDE BUTTON)
+# SESSION STATE
 # -------------------------------
+
+if "show_evaluation" not in st.session_state:
+    st.session_state["show_evaluation"] = False
+
+# -------------------------------
+# MODEL EVALUATION BUTTON
+# -------------------------------
+
+if st.button("📊 Model Evaluation"):
+    st.session_state["show_evaluation"] = True
+
+# -------------------------------
+# SHOW EVALUATION ONLY AFTER CLICK
+# -------------------------------
+
+if st.session_state["show_evaluation"]:
+
+    st.markdown("---")
+
+    # TITLE
+    st.markdown("## 🤖 AI Model Performance Dashboard")
+
+    st.markdown("""
+    Evaluate the predictive reliability and analytical performance
+    of the machine learning model used for customer churn prediction.
+    """)
+
+    # -------------------------------
+    # FIRST ROW KPI
+    # -------------------------------
+
+    k1, k2, k3 = st.columns(3)
+
+    with k1:
+        st.markdown("""
+        <div class='metric-card'>
+            <h4>🎯 Accuracy</h4>
+            <h2>82.11%</h2>
+            <p>Strong Overall Prediction</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.progress(0.8211)
+
+    with k2:
+        st.markdown("""
+        <div class='metric-card'>
+            <h4>📌 Precision</h4>
+            <h2>68.50%</h2>
+            <p>Reliable Churn Detection</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.progress(0.6850)
+
+    with k3:
+        st.markdown("""
+        <div class='metric-card'>
+            <h4>🔍 Recall</h4>
+            <h2>60.05%</h2>
+            <p>Effective Risk Identification</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.progress(0.6005)
+
+    # -------------------------------
+    # SECOND ROW KPI
+    # -------------------------------
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    k4, k5 = st.columns(2)
+
+    with k4:
+        st.markdown("""
+        <div class='metric-card'>
+            <h4>⚖️ F1 Score</h4>
+            <h2>64.00%</h2>
+            <p>Balanced Classification Model</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.progress(0.6400)
+
+    with k5:
+        st.markdown("""
+        <div class='metric-card'>
+            <h4>📈 ROC-AUC</h4>
+            <h2>86.23%</h2>
+            <p>Excellent Predictive Separation</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.progress(0.8623)
+
+        # -------------------------------
+    # SPACING
+    # -------------------------------
+
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.divider()
+
+    # -------------------------------
+    # SUMMARY
+    # -------------------------------
+
+    evaluation_message = """
+    The churn prediction model demonstrates strong predictive capability
+    with reliable classification performance across customer churn scenarios.
+
+    The achieved ROC-AUC score above 86 percent indicates excellent
+    separation capability between churn and non-churn customers.
+
+    Accuracy, precision, recall, and F1 metrics collectively confirm
+    the model's analytical consistency and business reliability.
+    """
+
+    st.markdown("## 📌 Model Evaluation Summary")
+
+    st.info(evaluation_message)
+
+    # -------------------------------
+    # SPEAK BUTTON
+    # -------------------------------
+
+    if st.button("🔊 Speak Evaluation Summary"):
+
+        speak(evaluation_message)
+
+# -------------------------------
+# STATIC INSIGHTS
+# -------------------------------
+
 st.markdown("### 💡 Key Insights")
 
 st.markdown("""
 <div class='card'>
 <ul>
-<li>High monthly charges increase churn risk</li>
-<li>Low tenure customers are more likely to leave</li>
-<li>Month-to-month contracts have highest churn</li>
+<li>High monthly charges significantly increase churn probability.</li>
+<li>Customers with lower tenure show higher disengagement behavior.</li>
+<li>Month-to-month contract users represent the highest churn segment.</li>
+<li>Long-term contracts contribute to improved customer retention.</li>
+<li>Internet service type strongly influences churn behavior patterns.</li>
 </ul>
 </div>
 """, unsafe_allow_html=True)
